@@ -1,0 +1,71 @@
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+import numpy as np
+
+1.Generate a quantum key
+def generate_quantum_key(length):
+    """
+    Use a quantum circuit to generate a random key of the specified length.
+
+    :param length: Length of the random key (in bits)
+    :return: A binary string representing the random key
+    """
+    # Create a quantum circuit
+    qc = QuantumCircuit(length, length)
+    qc.h(range(length))  # Apply Hadamard gates to generate superposition
+    qc.measure(range(length), range(length))  # Measure the qubits
+
+    # Simulate the quantum circuit
+    simulator = AerSimulator()
+    result = simulator.run(qc, shots=1).result()
+    counts = result.get_counts()
+    random_key = list(counts.keys())[0]  # Extract the random result
+
+    return random_key
+
+2.Perform XOR encryption and decryption
+def xor_encrypt_decrypt(message, key):
+    """
+    Use the XOR operation for encryption and decryption of the message.
+
+    :param message: The original message (a string)
+    :param key: The binary key for encryption (must match message length)
+    :return: The encrypted or decrypted message
+    """
+    if len(message) * 8 != len(key):
+        raise ValueError("Key length must match the message length in bits.")
+
+    # Convert the message to binary representation
+    binary_message = ''.join(format(ord(char), '08b') for char in message)
+
+    # XOR each bit of the binary message with the key
+    xor_result = ''.join(str(int(bm) ^ int(k)) for bm, k in zip(binary_message, key))
+
+    # Convert the XOR result back to a string
+    decrypted_message = ''.join(chr(int(xor_result[i:i+8], 2)) for i in range(0, len(xor_result), 8))
+
+    return decrypted_message
+
+3.Main function
+def main():
+    """
+    Main function to demonstrate the process of key generation, encryption, and decryption.
+    """
+    original_message = "hello world"
+    key_length = len(original_message) * 8  # Each character needs 8 bits of key
+
+    # Generate a random key (binary)
+    random_key_binary = generate_quantum_key(key_length)
+    print("Generated random key (binary):", random_key_binary)
+
+    # Encrypt
+    encrypted_message = xor_encrypt_decrypt(original_message, random_key_binary)
+    print("Encrypted message (binary):", ''.join(format(ord(char), '08b') for char in encrypted_message))
+
+    # Decrypt
+    decrypted_message = xor_encrypt_decrypt(encrypted_message, random_key_binary)
+    print("Decrypted message:", decrypted_message)
+
+4.Run the main function
+if __name__ == "__main__":
+    main()
